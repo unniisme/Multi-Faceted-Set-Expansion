@@ -9,7 +9,7 @@ This project is for multi-faceted set expansion.
 
 ### Dependencies
 
-All files/datasets required for this project can be found here :  
+All files/datasets required for this project can be found here :  https://drive.google.com/drive/folders/1YMmG1ImS2JeSYJvd7PGmxn8FNDwttg_r?usp=sharing
 
 
 ### Executing program
