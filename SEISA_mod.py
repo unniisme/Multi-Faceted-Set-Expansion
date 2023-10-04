@@ -8,10 +8,10 @@ Created on Tue Mar  5 15:49:37 2019
 
 
 import numpy as np
-import model.dataPrep as dp
-import model.sim_var as sc
+import dataPrep as dp
+import sim_var as sc
 import json
-import model.structure_lib as util
+import structure_lib as util
 
 
 def checklist(l1, l2):

@@ -13,6 +13,15 @@ import math
 data_path = "/home/kpal/Documents/git-mpi/peering/src/"
 
 def createdict(filepath):
+    """
+    Create dictionaries and maps based on the information in the given file.
+
+    Parameters:
+    filepath (str): The path to the file containing entity-list information.
+
+    Returns:
+    tuple: A tuple containing dictionaries and maps for lists, entities, and their relationships.
+    """
     list_map = defaultdict(list)   # list --> list of entities
     entity_map = defaultdict(list) # entity --> list of sets
     list_dict = { }                # dictionary for list : id
@@ -42,6 +51,16 @@ def createdict(filepath):
 
     
 def filter_cat(filepath, cat_size):
+    """
+    Filter categories based on the given category size threshold and write the results to a file.
+
+    Parameters:
+    filepath (str): The path to the input file containing category information.
+    cat_size (float): The category size threshold for filtering.
+
+    Returns:
+    None
+    """
     
     outfile = open(filepath, 'w')
 
@@ -55,6 +74,17 @@ def filter_cat(filepath, cat_size):
     outfile.close()
     
 def filter_triples(filepath, e_candidates, l_candidates):
+    """
+    Filter triples based on the given entity and list candidates and write the results to a file.
+
+    Parameters:
+    filepath (str): The path to the input file containing entity-list triples.
+    e_candidates (list): List of entity candidates.
+    l_candidates (list): List of list candidates.
+
+    Returns:
+    None
+    """
     
     outfile = open(filepath, 'w')
 
@@ -68,6 +98,17 @@ def filter_triples(filepath, e_candidates, l_candidates):
     outfile.close()
 
 def read_size(filepath, elements, column):
+    """
+    Read size information for specified elements from the given file.
+
+    Parameters:
+    filepath (str): The path to the input file containing size information.
+    elements (list): List of elements to retrieve size information for.
+    column (int): The column index for size information.
+
+    Returns:
+    np.ndarray: An array containing the size information for the specified elements.
+    """
     score = np.zeros(len(elements))
     with open(filepath, "r") as f:
         for line in f:           
@@ -79,6 +120,17 @@ def read_size(filepath, elements, column):
 
    
 def score_dict(filepath, elements, column):
+    """
+    Compute scores for specified elements based on the given file and column.
+
+    Parameters:
+    filepath (str): The path to the input file containing score information.
+    elements (list): List of elements to compute scores for.
+    column (int): The column index for score information.
+
+    Returns:
+    np.ndarray: An array containing the computed scores for the specified elements.
+    """
     score = np.zeros(len(elements))
     with open(filepath, "r") as f:
         for line in f:
@@ -137,6 +189,16 @@ def createdismatrix(Sim_m):
     return(dis_m)
             
 def createQuery(seedentities, entities):
+    """
+    Create a query vector and corresponding index list based on seed entities and a list of all entities.
+
+    Parameters:
+    seedentities (list): List of seed entities.
+    entities (list): List of all entities.
+
+    Returns:
+    tuple: A tuple containing the query vector (numpy array) and a list of indices of the seed entities in the entity list.
+    """
     q_index = []
     q = np.zeros(len(entities))
     for i in seedentities:

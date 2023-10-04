@@ -7,7 +7,7 @@ Created on Fri Mar 22 17:41:31 2019
 """
 
 import numpy as np
-import model.dataPrep as dp
+import dataPrep as dp
 import json
 import scipy as sp
 
@@ -66,6 +66,19 @@ def pairwise_sparse_jaccard_distance_weighted(X):
     return sparse_dict
 
 def createSimMatrix(A, S, c_score, e_score, peer_group):
+    """
+    Create a similarity matrix based on input data.
+
+    Parameters:
+    A (numpy.ndarray): The input matrix representing some data.
+    S (numpy.ndarray): The output similarity matrix to be computed.
+    c_score (numpy.ndarray): Coefficient scores.
+    e_score (numpy.ndarray): Entity scores.
+    peer_group (list): List of indices representing a peer group.
+
+    Returns:
+    numpy.ndarray: The similarity matrix computed based on the input data.
+    """
     G = A*c_score
     number_entity = np.shape(G)[0]
 

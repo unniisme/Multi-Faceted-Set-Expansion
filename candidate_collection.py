@@ -5,16 +5,24 @@ Created on Fri Mar 29 11:56:06 2019
 
 @author: kpal
 """
-import model.dataPrep as dp
-import model.sim_var as sc
+data_path = "/home/kpal/Documents/git-mpi/peering/src/companies/"
+
+
+
+import dataPrep as dp
+import sim_var as sc
 import numpy as np
 import json
 import scipy.sparse as sp
 from collections import defaultdict
 
-data_path = "/home/kpal/Documents/git-mpi/peering/src/companies/"
 
 def candidate_collect(query, entity_map, list_map, depth, maxlimit):
+    """
+    This function takes a query, a mapping of entities to lists they belong to, a mapping of lists to entities, a depth, and a maximum limit.
+    It collects a set of candidate entities based on the input query and the relationships between entities and lists.
+    It starts with the query entities, then iteratively expands by including entities from lists that are related to the initially collected entities, up to a certain depth or limit.
+    """
     final_candidates= []
     checked_lists = []
     total_entity = len(entity_map)
@@ -51,6 +59,10 @@ def list_candidate_collect(candidates_entity, entity_map):
     # print(type(entity_map))
     # # candidates_entity = list(candidates_entity)
     # candidates_entity = candidates_entity[0]
+    """
+    This function takes a list of candidate entities and a mapping of entities to lists they belong to.
+    It collects a set of candidate lists based on the input candidate entities by retrieving the lists associated with those entities.
+    """
     list_candidates = []
     for i in candidates_entity:
         # print(i)
@@ -62,18 +74,26 @@ def list_candidate_collect(candidates_entity, entity_map):
     return(list_candidates)
             
 def sliceMatrix(sim_matrix, candidates_index):
+    """
+    This function takes a similarity matrix and a set of candidate indices.
+    It creates a new matrix by slicing the original similarity matrix based on the provided candidate indices, resulting in a submatrix.
+    """
     
-    size = len(candidate_index)
+    size = len(candidates_index)
     slice_matrix = np.zeros((size, size))
     
     for i in range(size):
         for j in range(size):
-            slice_matrix[i,j] = sim_matrix[candidate_index[i],candidate_index[j]]
+            slice_matrix[i,j] = sim_matrix[candidates_index[i],candidates_index[j]]
             
     return(slice_matrix)
 
 def sliceEtoList(entityTolist, candidate_l_index, candidate_index):
-    
+    """
+    This function takes a matrix representing entity-to-list relationships, a set of candidate list indices, and a set of candidate entity indices.
+    It creates a new matrix by slicing the original entity-to-list matrix based on the provided candidate indices for both lists and entities, resulting in a submatrix.
+    """
+
     slice_matrix = np.zeros((len(candidate_index), len(candidate_l_index)))
     for i in range(len(candidate_index)):
         for j in range(len(candidate_l_index)):

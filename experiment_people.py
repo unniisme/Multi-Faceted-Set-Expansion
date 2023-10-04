@@ -19,15 +19,18 @@ import sys
 import numpy as np
 import scipy.sparse as sp
 import json
-import model.candidate_collection as cancol
-import model.dataPrep as dp
-import model.sim_var as sc
-import model.SEISA_mod as seps
-import model.structure_lib as util
+import candidate_collection as cancol
+import dataPrep as dp
+import sim_var as sc
+import SEISA_mod as seps
+import structure_lib as util
 from collections import defaultdict
 import time
 import copy
 
+import logging
+FORMAT = "[%(filename)s:%(lineno)s - %(funcName)13s() ] %(message)s"
+logging.basicConfig(format=FORMAT, filename='test.log', encoding='utf-8', level=logging.DEBUG)
 
 
 class Model:
@@ -43,7 +46,7 @@ class Model:
 
     def calculate(self, domain, query, n_pg = 5, n_p = 6, score_type = 1, category_score_type = 2):
 
-        print("NPG ",n_pg)
+        logging.info("NPG %s",n_pg)
         self.query = [query]
         self.n_pg = n_pg
         self.n_p = n_p
@@ -56,7 +59,7 @@ class Model:
         # def getTopX(x, arr):
 
         
-        print("loaded all dictionaries")
+        logging.info("loaded all dictionaries")
 
         peergroup_result = defaultdict(list)
 
@@ -67,25 +70,24 @@ class Model:
         found_list = []
         peergroupList = []
 
-        candidates, cl = cancol.candidate_collect(copy.deepcopy(self.query),self.entity_map, self.list_map,2,1000)
+        candidates, _ = cancol.candidate_collect(copy.deepcopy(self.query),self.entity_map, self.list_map,2,1000)
 
         candidate_l = cancol.list_candidate_collect(candidates, self.entity_map)
 
-        print("PRINTING SOMETHING")
-        print(len(candidate_l))
-        print("Candidates_l : ",candidate_l[0:5])
-        print("Candidates : ",candidates[0:5])
+        logging.debug("PRINTING SOMETHING")
+        logging.debug("length of Candidates_l : %s", len(candidate_l))
+        logging.debug("candidates_l : %s",candidate_l[0:5])
+        logging.debug("candidates : %s",candidates[0:5])
 
-
+        # enitityToList is a mapping  between entities and lists
         entityTolist = (sp.load_npz(self.data_path+"etolist_matrix.npz")).toarray()
-        print("Entity to list size : ", len(entityTolist))
-        print("Entity to list[0] size : ", len(entityTolist[0]))
-        # print(entityTolist[0][0])
+        logging.debug("Entity to list size : %s", len(entityTolist))
+        logging.debug("Entity to list[0] size : %s", len(entityTolist[0]))
 
-        for i in range(10):
-            print(entityTolist[0][i])
-
-        print("loaded th matrix")
+        # for i in range(100):
+            # logging.debug(entityTolist[0][i])
+        logging.debug("Entity to List mapping:\n%s", entityTolist[:10, :10])
+        logging.info("loaded th matrix")
         candidate_index, candidate_l_index = [], []
 
         for i in candidates:
@@ -99,7 +101,6 @@ class Model:
         entityTolist = cancol.sliceEtoList(entityTolist, candidate_l_index, candidate_index)
 
         entities = [0]*len(candidate_index)
-        print("CAND : ",candidates[:5])
 
         seed_inds = []
         for i in candidates:
@@ -108,14 +109,16 @@ class Model:
             if i in query:
                 seed_inds.append(temp)
 
-        print("ENTS : ",entities[:10])
+        logging.debug("Entities : %s",entities[:10])
 
         group_lists = [0]*len(candidate_l_index)
         for i in candidate_l:
             group_lists[candidate_l_index.index(self.list_dict[i])] = i
 
-        initial_q, q_index = dp.createQuery(self.query, entities)
-        found_peers = []
+        logging.debug("Group Lists : %s",group_lists[:10])
+
+        initial_q, _ = dp.createQuery(self.query, entities) # BUG: WHYYYYYYY
+        # found_peers = []
 
         ###############################################
 
@@ -127,8 +130,8 @@ class Model:
         e_score = dp.score_dict(self.data_path+"entities_scores.tsv",entities,self.score_type)
         e_score = np.true_divide(e_score, np.amax(e_score))
 ##        cat_size = dp.read_size(self.data_path+"categories_score.tsv", group_lists,1)
-        cat_size = dp.score_dict(self.data_path+"categories_scores.tsv", group_lists,self.category_score_type)
-        catsize_norm = np.true_divide(1, cat_size)
+        # cat_size = dp.score_dict(self.data_path+"categories_scores.tsv", group_lists,self.category_score_type)
+        # catsize_norm = np.true_divide(1, cat_size)
 
 
         ###############################################
@@ -144,25 +147,25 @@ class Model:
         # entities => list of E entities, according to the index 
         # group_lists => list of F facets, according to index
 
-        print("Entity to list size : ", len(entityTolist))
-        print("Entity to list[0] size : ", len(entityTolist[0]))
+        logging.info("Entity to list size : %s", len(entityTolist))
+        logging.info("Entity to list[0] size : %s", len(entityTolist[0]))
 
         # Matrix E x F ==> 1 if E belongs in F, 0 otherwise
-        print("Entitytolist : ", entityTolist)
+        logging.info("Entitytolist :\n%s", entityTolist)
 
         # FACET SCORE --> List of (F) scores
-        print("c_score size : ", len(c_score))
-        print("c_score : ", c_score)
+        logging.info("c_score size : %s", len(c_score))
+        logging.info("c_score :\n%s", c_score)
 
         # ENTITY SCORE --> List of (E) scores 
-        print("e_score size : ", len(e_score))
-        print("e_score : ", e_score)
+        logging.info("e_score size : %s", len(e_score))
+        logging.info("e_score : \n%s", e_score)
 
-        print("Group_lists : ", len(group_lists))
-        print("Group_lists : ", group_lists[:5])
+        logging.info("Group_lists : %s", len(group_lists))
+        logging.info("Group_lists : \n%s", group_lists[:5])
 
-        print("Query :" , query)
-        print("Initial_q :" , initial_q)
+        logging.info("Query : %s" , query)
+        logging.info("Initial_q : \n%s" , initial_q)
 
 
 
@@ -178,12 +181,15 @@ class Model:
         #     print("done creating s matrix")
         #     D = dp.createdismatrix(S)
         #     print("done creating d matrix")
-        #     peer_group, c_index, group_score = seps.findGroup_Listconst_discomp_score(initial_q, S, self.n_p, entityTolist, found_peers, D, self.list_map, group_lists, catsize_norm, found_list)
+        # #     peer_group, c_index, group_score = seps
+        # logging.debug(initial_q).findGroup_Listconst_discomp_score(initial_q, S, self.n_p, entityTolist, found_peers, D, self.list_map, group_lists, catsize_norm, found_list)
 
         #     group = []
         #     for j in peer_group:
-        #         if ((j in found_peers)!= True):
-        #             found_peers.append(j)
+        # #         if ((j in found_peers)!= True
+        # logging.debug(initial_q)):
+        # #             found_peers.append(j
+        # logging.debug(initial_q))
         #         group.append(entities[j])
 
         #     common_list = dp.updateMatrix(group, self.query, entityTolist, entities)
@@ -206,8 +212,8 @@ class Model:
         entityTolistC = np.zeros((len(entityTolist), len(entityTolist[0])))
         entityTolistI = []
 
-        print("SEED INDS : ", seed_inds)
-        print(entities[seed_inds[0]])
+        logging.debug("SEED INDS : %s", seed_inds)
+        logging.debug(entities[seed_inds[0]])
         for i in seed_inds:
             for k in range(len(c_score)):
                 for j in range(len(e_score)):
@@ -221,9 +227,9 @@ class Model:
             if(entityTolistC[i][seed_inds[0]] > 0):
                 cnt += 1 
 
-        print("CNT", cnt)
-        print("ENTITY TO LIST : ", entityTolistC)
-        print("RELMAT : ",relMat)
+        logging.debug("CNT %s", cnt)
+        logging.debug("ENTITY TO LIST :  %s", entityTolistC)
+        logging.debug("RELMAT :  %s",relMat)
         peerGroups = []
 
     
@@ -251,8 +257,8 @@ class Model:
 
             peerGroups.append(inds)
 
-        print("AFTER ALPHA ADDITION")
-        print(peerGroups[:10])
+        logging.debug("AFTER ALPHA ADDITION")
+        logging.debug(peerGroups[:10])
 
         # STEP 3-5
         for k in range(len(c_score)):
@@ -279,8 +285,8 @@ class Model:
 
             peerGroups.append(inds)
 
-        print("AFTER BETA ADDITION")
-        print(peerGroups[:10])
+        logging.debug("AFTER BETA ADDITION")
+        logging.debug(peerGroups[:10])
 
         # STEP 8-12
         for i in range(len(c_score)):
@@ -309,8 +315,8 @@ class Model:
             peerGroups.append(inds)
 
 
-        print("AFTER GAMMA ADDITION")
-        print(peerGroups[:10])
+        logging.debug("AFTER GAMMA ADDITION")
+        logging.debug(peerGroups[:10])
 
 # /(x*(len(peerGroups)-1))
         # Calculating Group Score
@@ -321,7 +327,7 @@ class Model:
                 sm += (-1*j[0])
             groupScores.append(sm)
 
-        print("GROUP SCORES :")
+        logging.info("GROUP SCORES :")
         # print(groupScores)
         #  To store top k groups
         topGroups = set()
@@ -337,8 +343,8 @@ class Model:
             topGroups.add(tuple([-1*mex, ind]))
             tgInd.add(ind)
 
-        print(topGroups)
-        print("PRINTING TOP K GROUPS ITER 1 ", len(topGroups))
+        logging.info(topGroups)
+        logging.info("PRINTING TOP K GROUPS ITER 1 (len: %s)", len(topGroups))
         for i in topGroups:
             print(group_lists[i[1]], -1*i[0])
             # print(peerGroups[i[1]])
@@ -367,7 +373,7 @@ class Model:
 
 
 
-        print("done calculating peer group")
+        logging.info("done calculating peer group")
         # peergroup_result[self.query[0]] = [peergroupList]
         peergroup_result[self.query[0]] = []
 
@@ -382,7 +388,7 @@ class Model:
         count = 0
         for i in processing_time:
             count += i
-        print("avg setup time: ", count / len(self.query))
+        print("avg processing time: ", count / len(self.query))
 
         return peergroup_result
     
