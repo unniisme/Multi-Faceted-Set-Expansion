@@ -23,8 +23,6 @@ import pdb
 import math
 
 import logging
-FORMAT = "[%(filename)s:%(lineno)s - %(funcName)13s() ] %(message)s"
-logging.basicConfig(format=FORMAT, filename='log/experiment_people.log', encoding='utf-8', level=logging.DEBUG)
  
  
 class Model:
