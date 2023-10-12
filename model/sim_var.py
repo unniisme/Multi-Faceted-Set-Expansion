@@ -7,7 +7,7 @@ Created on Fri Mar 22 17:41:31 2019
 """
 
 import numpy as np
-import dataPrep as dp
+import model.dataPrep as dp
 import json
 import scipy as sp
 

@@ -9,8 +9,8 @@ data_path = "/home/kpal/Documents/git-mpi/peering/src/companies/"
 
 
 
-import dataPrep as dp
-import sim_var as sc
+import model.dataPrep as dp
+import model.sim_var as sc
 import numpy as np
 import json
 import scipy.sparse as sp
