@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Flask Website</title>
+</head>
+<body>
+    <h1>Select an Entry</h1>
+    <form method="post">
+        <select name="entry">
+            {% for entry in entries %}
+                <option value="{{ entry }}">{{ entry }}</option>
+            {% endfor %}
+        </select>
+
+        <h2>Number of Categories:</h2>
+        <input type="number" name="num_categories" value="4" required>
+
+        <h2>Number of Elements per Category:</h2>
+        <input type="number" name="num_elements" value="5" required>
+        <br>
+        <br>
+        <input type="submit" value="Submit">
+    </form>
+
+    <br>
+
+    {% if result %}
+        <h1>Result</h1>
+        <p1>Selected    : {{selected_entry}}</p1><br>
+        <p1>Peer Groups : {{num_categories}}</p1><br>
+        <p1>Peers       : {{num_elements}}</p1><br>
+        <!-- You can generate categories and elements here based on user input. -->
+        {% for entry in result%}
+            <h2>{{entry['group_label']}}</h2>
+            {% for peer in entry['peers'] %}
+                <p1>{{peer}}</p1>
+                <br>
+            {% endfor %}    
+        {% endfor %}    
+    {% endif %}
+</body>
+</html>
