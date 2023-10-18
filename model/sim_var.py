@@ -8,12 +8,11 @@ Created on Fri Mar 22 17:41:31 2019
 
 import numpy as np
 import model.dataPrep as dp
-import json
 import scipy as sp
 
-from scipy.sparse import csr_matrix
 import collections
 
+import logging
 
 def weightedJaccard(a1, a2):
     nom = np.sum(np.minimum(a1, a2))
@@ -57,15 +56,21 @@ def createWJSimMatrix(A, score):
     return(S)
 
 def pairwise_sparse_jaccard_distance_weighted(X):
-
+    logging.info("")
     cx = sp.sparse.coo_matrix(X)
     sparse_dict = collections.defaultdict(dict)
     for i, j, v in zip(cx.row, cx.col, cx.data):
 
         sparse_dict[i][j] = v
+
     return sparse_dict
 
-def createSimMatrix(A, S, c_score, e_score, peer_group):
+def createSimMatrix(A : np.ndarray, 
+                    S : np.ndarray,
+                    c_score : np.ndarray, 
+                    e_score : np.ndarray, 
+                    peer_group : list[int]
+                    ) -> np.ndarray:
     """
     Create a similarity matrix based on input data.
 
@@ -79,6 +84,9 @@ def createSimMatrix(A, S, c_score, e_score, peer_group):
     Returns:
     numpy.ndarray: The similarity matrix computed based on the input data.
     """
+    logging.info("")
+    logging.debug("A size : %s", A.shape)
+
     G = A*c_score
     number_entity = np.shape(G)[0]
 

@@ -34,6 +34,44 @@ class Model:
         self.list_map = list_map
         self.entity_dict = entity_dict
         self.list_dict = list_dict
+
+        self.full_sim_matrix = None
+
+    def precompute_similarity(self, domain):
+        # Precompute the similarity matrix for the entire list
+        self.data_path = domain + "/"
+        logging.info("Precomputing similarity")
+        time_start = time.time()
+
+        # Maybe write all this in a common function
+        entityTolist = self.load_entity_to_list()
+        group_lists = [0] * entityTolist.shape[1]
+        c_score = dp.score_dict(self.data_path+"categories_scores.tsv", group_lists,1)
+        c_score = np.true_divide(c_score, np.amax(c_score))
+        entities = [0] * entityTolist.shape[0]
+        e_score = dp.score_dict(self.data_path+"entities_scores.tsv",entities,1)
+        e_score = np.true_divide(e_score, np.amax(e_score))
+        S = np.zeros((entityTolist.shape[0], entityTolist.shape[0]))
+
+        self.full_sim_matrix = sc.createSimMatrix(entityTolist, S, c_score, e_score, [])
+
+        logging.info("Finished precomputing")
+        logging.info("Time taken: %s", time.time() - time_start)
+        logging.info("saving file")
+
+        np.savez_compressed("sim_matrix.npz", self.full_sim_matrix)
+
+
+    def load_entity_to_list(self) -> np.ndarray:
+        assert(self.data_path)
+
+        # enitityToList is a mapping  between entities and lists
+        logging.info("Loading etolist matrix from %s", self.data_path)
+        entityTolist = (sp.load_npz(self.data_path+"etolist_matrix.npz")).toarray()
+        logging.debug("Entity to list size : %s", len(entityTolist))
+        logging.debug("Entity to list[0] size : %s", len(entityTolist[0]))
+
+        return entityTolist
  
  
     def calculate(self, domain, query, n_pg = 5, n_p = 6, score_type = 1, category_score_type = 2, alpha = 0.3, beta = 0.3, gamma = 0.4, popFactor = 1):
@@ -48,10 +86,10 @@ class Model:
         self.domain = domain
         self.data_path =  domain + "/"
  
-        # def getTopX(x, arr):
  
- 
-        logging.info("loaded all dictionaries")
+        logging.info("Starting preprocessing")
+
+        entityTolist = self.load_entity_to_list()
  
         peergroup_result = defaultdict(list)
  
@@ -62,23 +100,16 @@ class Model:
         found_list = []
         peergroupList = []
  
+        logging.info("Calculating candidate entities and lists")
         candidates, cl = cancol.candidate_collect(copy.deepcopy(self.query),self.entity_map, self.list_map,2,2000)
  
         candidate_l = cancol.list_candidate_collect(candidates, self.entity_map)
  
-        logging.debug("PRINTING SOMETHING")
         logging.debug("length of Candidates_l : %s", len(candidate_l))
         logging.debug("candidates_l : %s",candidate_l[0:5])
         logging.debug("candidates : %s",candidates[0:5])
- 
-        # enitityToList is a mapping  between entities and lists
-        entityTolist = (sp.load_npz(self.data_path+"etolist_matrix.npz")).toarray()
-        logging.debug("Entity to list size : %s", len(entityTolist))
-        logging.debug("Entity to list[0] size : %s", len(entityTolist[0]))
+        logging.debug("Entity to List mapping (first 10x10 entries):\n%s", entityTolist[:10, :10])
 
-    
-        logging.debug("Entity to List mapping:\n%s", entityTolist[:10, :10])
-        logging.info("loaded the matrix")
         candidate_index, candidate_l_index = [], []
  
         for i in candidates:
@@ -159,7 +190,6 @@ class Model:
         time_c = time.time()
         peer_group = []
         number_entity = np.shape(entityTolist)[0]
-        S = np.zeros((number_entity, number_entity))
  
  
         # entities => list of E entities, according to the index 
@@ -200,12 +230,14 @@ class Model:
 
         # Creating Relation Matrix
         time_init = time.time()
+        S = np.zeros((number_entity, number_entity))
         relMat = np.around(sc.createSimMatrix(entityTolist, S, c_score, e_score, []), decimals = 2)
         time_init1 = time.time()
 
        
         entityTolistC = np.zeros((len(entityTolist), len(entityTolist[0])))
         # print("OUR ALGORITHM STARTS NOW")
+        logging.info("Starting algorithm")
 
         popScore = {}
 
