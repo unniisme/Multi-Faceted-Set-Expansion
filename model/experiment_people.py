@@ -37,7 +37,10 @@ class Model:
 
         self.full_sim_matrix = None
 
-    def precompute_similarity(self, domain):
+    def precompute_similarity(self, domain, score_type = 1, category_score_type = 1):
+        self.score_type = score_type
+        self.category_score_type = category_score_type
+
         # Precompute the similarity matrix for the entire list
         self.data_path = domain + "/"
         logging.info("Precomputing similarity")
@@ -45,21 +48,21 @@ class Model:
 
         # Maybe write all this in a common function
         entityTolist = self.load_entity_to_list()
-        group_lists = [0] * entityTolist.shape[1]
-        c_score = dp.score_dict(self.data_path+"categories_scores.tsv", group_lists,1)
-        c_score = np.true_divide(c_score, np.amax(c_score))
-        entities = [0] * entityTolist.shape[0]
-        e_score = dp.score_dict(self.data_path+"entities_scores.tsv",entities,1)
-        e_score = np.true_divide(e_score, np.amax(e_score))
+        
+        group_lists = list(self.list_dict.keys())
+        entities = list(self.entity_dict.keys())
+        c_score, e_score = self.load_scores(entityTolist, group_lists, entities)
         S = np.zeros((entityTolist.shape[0], entityTolist.shape[0]))
 
-        self.full_sim_matrix = sc.createSimMatrix(entityTolist, S, c_score, e_score, [])
+        # self.full_sim_matrix_min, self.full_sim_matrix_max  = sc.createFullSimMatrix(entityTolist, Smin, Smax, c_score, e_score, [])
+        self.sim_matrix = sc.createSimMatrix(entityTolist, S, c_score, e_score, [])
 
         logging.info("Finished precomputing")
         logging.info("Time taken: %s", time.time() - time_start)
         logging.info("saving file")
 
-        np.savez_compressed("sim_matrix.npz", self.full_sim_matrix)
+        # np.savez_compressed(self.data_path + "sim_matrix.npz", min = self.full_sim_matrix_min, max = self.full_sim_matrix_max)
+        np.savez(self.data_path + "sim_matrix.npz", self.sim_matrix)
 
 
     def load_entity_to_list(self) -> np.ndarray:
@@ -68,13 +71,41 @@ class Model:
         # enitityToList is a mapping  between entities and lists
         logging.info("Loading etolist matrix from %s", self.data_path)
         entityTolist = (sp.load_npz(self.data_path+"etolist_matrix.npz")).toarray()
-        logging.debug("Entity to list size : %s", len(entityTolist))
-        logging.debug("Entity to list[0] size : %s", len(entityTolist[0]))
 
         return entityTolist
+
+    def load_scores(self, entityTolist : np.ndarray, group_lists : list, entities : list) -> tuple[np.ndarray, np.ndarray]:
+        """
+        Loads c_score and e_score from data path and returns them both
+        """
+        assert(self.data_path)
+
+        logging.info("Loading categories_scores from %s", self.data_path)
+        logging.debug("group_lists : %s", group_lists)
+        c_score = dp.score_dict(self.data_path+"categories_scores.tsv", group_lists,self.category_score_type)
+        c_score = np.true_divide(c_score, np.amax(c_score))
+
+        logging.info("Loading categories_scores from %s", self.data_path)
+        logging.debug("entities : %s", entities)
+        e_score = dp.score_dict(self.data_path+"entities_scores.tsv",entities,self.score_type)
+        e_score = np.true_divide(e_score, np.amax(e_score))
+
+        return c_score, e_score
+
  
- 
-    def calculate(self, domain, query, n_pg = 5, n_p = 6, score_type = 1, category_score_type = 2, alpha = 0.3, beta = 0.3, gamma = 0.4, popFactor = 1):
+    def calculate(self, 
+                  domain, 
+                  query, 
+                  n_pg = 5, 
+                  n_p = 6, 
+                  score_type = 1, 
+                  category_score_type = 1, 
+                  alpha = 0.3, 
+                  beta = 0.3, 
+                  gamma = 0.4, 
+                  popFactor = 1,
+                  use_precalculated = False
+                  ):
  
         # print("NPG ",n_pg)
         self.query = [query]
@@ -165,23 +196,25 @@ class Model:
 
         # COMMENT BELOW LINES FOR TOY
         # ----------------------------
+        full_entityTolist = entityTolist
         entityTolist = cancol.sliceEtoList(entityTolist, candidate_l_index, candidate_index)
         isToy = 1
         # ----------------------------
  
         # a1, b1, a2, b2
 
-        c_score = dp.score_dict(self.data_path+"categories_scores.tsv", group_lists,1)
+        # c_score = dp.score_dict(self.data_path+"categories_scores.tsv", group_lists,1)
 #        c_score = dp.score_dict(self.data_path+"filtered_categories_scores.tsv", group_lists,1)
-        c_score = np.true_divide(c_score, np.amax(c_score))
+        # c_score = np.true_divide(c_score, np.amax(c_score))
 #        e_score = dp.score_dict(self.data_path+"entities_scores.tsv",entities,2)
-        e_score = dp.score_dict(self.data_path+"entities_scores.tsv",entities,self.score_type)
-        e_score = np.true_divide(e_score, np.amax(e_score))
+        # e_score = dp.score_dict(self.data_path+"entities_scores.tsv",entities,self.score_type)
+        # e_score = np.true_divide(e_score, np.amax(e_score))
 ##        cat_size = dp.read_size(self.data_path+"categories_score.tsv", group_lists,1)
-        cat_size = dp.score_dict(self.data_path+"categories_scores.tsv", group_lists,self.category_score_type)
-        catsize_norm = np.true_divide(1, cat_size)
+        # cat_size = dp.score_dict(self.data_path+"categories_scores.tsv", group_lists,self.category_score_type)
+        # catsize_norm = np.true_divide(1, cat_size)
  
- 
+        c_score, e_score = self.load_scores(entityTolist, group_lists, entities)
+
         ###############################################
  
  
@@ -227,11 +260,22 @@ class Model:
         # beta = 0.1
         # gamma = 0.6
  
-
         # Creating Relation Matrix
         time_init = time.time()
         S = np.zeros((number_entity, number_entity))
-        relMat = np.around(sc.createSimMatrix(entityTolist, S, c_score, e_score, []), decimals = 2)
+
+        if use_precalculated:
+            logging.info("Loading precomputed similarity matrix")
+
+            sim_matrix = np.load(self.data_path+"sim_matrix.npz")['arr_0']
+
+            logging.debug(sim_matrix)
+
+            relMat = np.around(sim_matrix, decimals=2)[np.ix_(candidate_index, candidate_index)]
+
+        else:
+            relMat = np.around(sc.createSimMatrix(entityTolist, S, c_score, e_score, []), decimals = 2)
+
         time_init1 = time.time()
 
        
