@@ -1,6 +1,7 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, flash
 from model.experiment_people import Model
 import json
+import os
 
 app = Flask(__name__)
 modelpath = "data/people"
@@ -10,19 +11,20 @@ datafile = modelpath + "/entity_dict.json"
 def load_files(path):
     with open(path) as json_file:
         return json.load(json_file)
+    
 
 def initiate_model(folder_name):
 
-    companies_entity_dict = load_files( folder_name + '/entity_dict.json')
+    entity_dict = load_files( folder_name + '/entity_dict.json')
 
-    companies_entity_map = load_files( folder_name + '/entity_map.json')
+    entity_map = load_files( folder_name + '/entity_map.json')
 
-    companies_list_dict = load_files( folder_name + '/list_dict.json')
+    list_dict = load_files( folder_name + '/list_dict.json')
 
-    companies_list_map = load_files( folder_name + '/list_map.json')
+    list_map = load_files( folder_name + '/list_map.json')
 
     model = Model()
-    model.initiate(companies_entity_map, companies_list_map, companies_entity_dict, companies_list_dict)
+    model.initiate(entity_map, list_map, entity_dict, list_dict)
     print("Initiated model.")
     return model
 
@@ -30,6 +32,7 @@ def initiate_model(folder_name):
 # Initialization
 data = load_files(datafile)
 model = initiate_model(modelpath)
+model.load_similarity_matrix(modelpath+"/")
 entries = data.keys()
 
 @app.route("/", methods=["GET", "POST"])
@@ -39,7 +42,13 @@ def index():
         num_categories = int(request.form.get("num_categories"))
         num_elements = int(request.form.get("num_elements"))
 
-        res = model.calculate(modelpath, selected_entry, num_categories, num_elements)
+        precomputed = bool(request.form.get("precomputed", False))
+        if not os.path.isfile(modelpath + "/sim_matrix.npz") and precomputed:
+            flash("Precomputed file not found")
+            precomputed = False
+            
+
+        res = model.calculate(modelpath, selected_entry, num_categories, num_elements, use_precalculated=precomputed)
         
         return render_template("index.html", entries=entries, result=res, selected_entry=selected_entry, num_categories=num_categories, num_elements=num_elements)
 

@@ -35,7 +35,7 @@ class Model:
         self.entity_dict = entity_dict
         self.list_dict = list_dict
 
-        self.full_sim_matrix = None
+        self.sim_matrix = None
 
     def precompute_similarity(self, domain, score_type = 1, category_score_type = 1):
         self.score_type = score_type
@@ -81,16 +81,21 @@ class Model:
         assert(self.data_path)
 
         logging.info("Loading categories_scores from %s", self.data_path)
-        logging.debug("group_lists : %s", group_lists)
         c_score = dp.score_dict(self.data_path+"categories_scores.tsv", group_lists,self.category_score_type)
         c_score = np.true_divide(c_score, np.amax(c_score))
 
         logging.info("Loading categories_scores from %s", self.data_path)
-        logging.debug("entities : %s", entities)
         e_score = dp.score_dict(self.data_path+"entities_scores.tsv",entities,self.score_type)
         e_score = np.true_divide(e_score, np.amax(e_score))
 
         return c_score, e_score
+    
+    def load_similarity_matrix(self, data_path):
+        logging.info("Loading precomputed matrix")
+        try:
+            self.sim_matrix = np.load(data_path+"sim_matrix.npz")['arr_0']
+        except OSError as e:
+            logging.error(e)
 
  
     def calculate(self, 
@@ -265,13 +270,14 @@ class Model:
         S = np.zeros((number_entity, number_entity))
 
         if use_precalculated:
-            logging.info("Loading precomputed similarity matrix")
 
-            sim_matrix = np.load(self.data_path+"sim_matrix.npz")['arr_0']
+            if not isinstance(self.sim_matrix, np.ndarray):
+                logging.info("Loading precomputed similarity matrix")
+                self.load_similarity_matrix(self.data_path)
 
-            logging.debug(sim_matrix)
+            logging.debug(self.sim_matrix)
 
-            relMat = np.around(sim_matrix, decimals=2)[np.ix_(candidate_index, candidate_index)]
+            relMat = np.around(self.sim_matrix[np.ix_(candidate_index, candidate_index)], decimals=2)
 
         else:
             relMat = np.around(sc.createSimMatrix(entityTolist, S, c_score, e_score, []), decimals = 2)
@@ -376,8 +382,9 @@ class Model:
             peerGroups[j] = inds
 
         # print("AFTER ALPHA ADDITION (ITERATION 0)")
- 
-        # print("Time:", time.time() - time_c)
+        logging.debug("AFTER ALPHA ADDITION (ITERATION 0)")
+        logging.debug("Time: %s", time.time() - time_c)
+
         time_c = time.time()
  
         # Calculating Group Score
@@ -445,10 +452,9 @@ class Model:
                         betaScores[i[1]] += beta * relMat[j[1]][i[1]] /  (temp - 1)
             # k[0] = groupScores[k[1]]
 
-        # print("AFTER BETA ADDITION (ITERATION 0)")
+        logging.debug("AFTER BETA ADDITION (ITERATION 0)")
+        logging.debug("Time: %s", time.time() - time_c)
         
- 
-        # print("Time:", time.time() - time_c)
         time_c = time.time()
  
         # Calculating Group Score
@@ -513,7 +519,7 @@ class Model:
         # 
 
         for i in range(n_pg - 1):
-            top_score = -100000
+            top_score = float("-inf")
             ind = -1            
             for j in topGroups:
                 if j[1] in topKGroups_Ind:
@@ -543,10 +549,9 @@ class Model:
 
         topKGroups = sorted(topKGroups, reverse = True)
 
-        # print("AFTER GAMMA ADDITION (ITERATION 0)")
-        
- 
-        # print("Time:", time.time() - time_c)
+        logging.debug("AFTER GAMMA ADDITION (ITERATION 0)")
+        logging.debug("Time: %s", time.time() - time_c)
+
         time_c = time.time()
 
         # print("Top K groups (RANKED)")
@@ -1245,7 +1250,7 @@ class Model:
 
             topKGroups = sorted(topKGroups, reverse = True)
 
-            print("TOP K GROUPS (ITERATION",(_+1),")")
+            # print("TOP K GROUPS (ITERATION",(_+1),")")
             for i in topKGroups:
                 print(group_lists[i[1]])
                 for j in peerGroups[i[1]]:
