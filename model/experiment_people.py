@@ -27,7 +27,43 @@ import logging
  
 class Model:
  
- 
+    def create_map(self, input_file):
+        # Read json file; the format will be a dictionary of key-value mappings where
+        # keys will be entities and values will be the lists
+        entity_list_map = json.load(input_file)
+        
+        # Initialize empty dictionaries required for initializing model
+        entity_map = {}
+        list_map = {}
+        entity_dict = {}
+        list_dict = {}
+        
+        # Entity and List IDs as required in entity_dict and list_dict
+        # Initialization of IDs is in order of appearance 
+        entity_id = 1
+        list_id = 1
+        
+        for key, value in entity_list_map:
+            # Add new entities and lists to the dicts
+            if entity_dict.get(key) is None:
+                entity_dict[entity_id] = key
+                entity_id += 1
+            if list_dict.get(value) is None:
+                list_dict[list_id] = value
+                list_id += 1
+            
+            # Add new neighbor to each of their adjacency lists
+            # If new entity/list, initialize a new adjacency list
+            if entity_map.get(key) is None:
+                entity_map[key] = []
+            entity_map[key].append(value)
+            
+            if list_map.get(key) is None:
+                list_map[key] = []
+            list_map[key].append(value)
+
+        self.initiate(entity_map, list_map, entity_dict, list_dict)
+           
     def initiate(self, entity_map, list_map, entity_dict, list_dict):
  
         self.entity_map = entity_map
