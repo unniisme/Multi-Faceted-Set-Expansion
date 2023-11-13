@@ -4,7 +4,7 @@
     <title>FaSet Demo</title>
 </head>
 <body>
-    <h1>List of Buttons</h1>
+    <h1>Available models</h1>
     <ul>
         {% for model in models %}
             <li>
@@ -14,5 +14,16 @@
             </li>
         {% endfor %}
     </ul>
+
+    <h2>Upload File</h2>
+    <form method="post" enctype="multipart/form-data">
+        <label for="file">Choose a file:</label>
+        <input type="file" id="file" name="file" accept=".json">
+        
+        <label for="groupName">Dataset Name:</label>
+        <input type="text" id="groupName" name="groupName" required>
+
+        <input type="submit" value="Upload">
+    </form>
 
 </body>
