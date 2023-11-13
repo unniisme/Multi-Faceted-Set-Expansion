@@ -1,9 +1,21 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Flask Website</title>
+    <title>FaSet Demo</title>
 </head>
 <body>
+
+    <!-- flashing -->
+    {% with messages = get_flashed_messages() %}  
+        {% if messages %}  
+            {% for message in messages %}  
+                <p>{{ message }}</p>  
+            {% endfor %}  
+        {% endif %}  
+    {% endwith %}  
+    <!--  -->
+
+
     <h1>Select an Entry</h1>
     <form method="post">
         <select name="entry">
@@ -18,11 +30,13 @@
         <h2>Number of Elements per Category:</h2>
         <input type="number" name="num_elements" value="5" required>
 
+        {% if precomputed_present %}
         <h2>Use precomputed similarity matrix</h2>
         <input type="checkbox" name="precomputed">
         <br>
         <br>
         <input type="submit" value="Submit">
+        {% endif %}
     </form>
 
     <br>
@@ -32,7 +46,6 @@
         <p1>Selected    : {{selected_entry}}</p1><br>
         <p1>Peer Groups : {{num_categories}}</p1><br>
         <p1>Peers       : {{num_elements}}</p1><br>
-        <!-- You can generate categories and elements here based on user input. -->
         {% for entry in result%}
             <h2>{{entry['group_label']}}</h2>
             {% for peer in entry['peers'] %}

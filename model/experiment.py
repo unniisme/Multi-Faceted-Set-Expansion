@@ -70,7 +70,10 @@ class Model:
                 list_map[key] = []
             list_map[key].append(value)
 
-        self.initiate(entity_map, list_map, entity_dict, list_dict)
+        return entity_map, list_map, entity_dict, list_dict
+    
+    def initiate_from_map(self, input_file):
+        self.initiate(*self.create_map(input_file))
 
     def initiate(self, entity_map, list_map, entity_dict, list_dict):
 

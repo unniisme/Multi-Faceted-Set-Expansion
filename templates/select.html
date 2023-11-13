@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FaSet Demo</title>
+</head>
+<body>
+    <h1>List of Buttons</h1>
+    <ul>
+        {% for model in models %}
+            <li>
+                <a href="{{ 'models/'+ model }}">
+                    <button>{{ model }}</button>
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+
+</body>
