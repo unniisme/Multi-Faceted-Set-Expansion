@@ -1,0 +1,54 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+}
+
+h1, h2 {
+    color: #333;
+}
+
+form {
+    margin-bottom: 20px;
+}
+
+select, input[type="number"], input[type="range"], input[type="checkbox"], input[type="submit"] {
+    margin: 5px 0;
+}
+
+input[type="range"] {
+    width: 80%;
+}
+
+span {
+    margin-left: 10px;
+    font-weight: bold;
+}
+
+#alphaValue, #betaValue, #gammaValue {
+    display: inline-block;
+    min-width: 30px;
+}
+
+h1, h2, p1 {
+    margin: 10px 0;
+}
+
+p1 {
+    margin-left: 20px;
+}
+
+/* Styling for the flashing messages */
+p {
+    color: #721c24;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    padding: 10px;
+    margin: 10px 0;
+}
+
+/* Styling for result section */
+h1, h2 {
+    border-bottom: 2px solid #333;
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+}
