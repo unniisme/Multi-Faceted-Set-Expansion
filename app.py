@@ -90,7 +90,7 @@ def select_page():
         except Exception as e:
             return str(e)
 
-        return redirect(url_for('/'))
+        return redirect(request.url)
 
     return render_template("select.html", models = models)
 

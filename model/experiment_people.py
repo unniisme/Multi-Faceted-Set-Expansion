@@ -32,39 +32,31 @@ class Model:
         Read json file; the format will be a dictionary of key-value mappings where
         keys will be entities and values will be the lists
         """
-        entity_list_map = json.load(input_file)
+        with open(input_file) as f:
+            entity_list_map = json.load(f)
         
         # Initialize empty dictionaries required for initializing model
-        entity_map = {}
         list_map = {}
         entity_dict = {}
         list_dict = {}
         
-        # Entity and List IDs as required in entity_dict and list_dict
-        # Initialization of IDs is in order of appearance 
-        entity_id = 1
-        list_id = 1
-        
-        for key, value in entity_list_map:
-            # Add new entities and lists to the dicts
-            if entity_dict.get(key) is None:
-                entity_dict[entity_id] = key
-                entity_id += 1
-            if list_dict.get(value) is None:
-                list_dict[list_id] = value
-                list_id += 1
+        for key in entity_list_map:
+            value = entity_list_map[key]
             
             # Add new neighbor to each of their adjacency lists
             # If new entity/list, initialize a new adjacency list
-            if entity_map.get(key) is None:
-                entity_map[key] = []
-            entity_map[key].append(value)
-            
-            if list_map.get(key) is None:
-                list_map[key] = []
-            list_map[key].append(value)
+            for category in value:
+                if category not in list_map:
+                    list_map[category] = []
+                list_map[category].append(key)
 
-        return entity_map, list_map, entity_dict, list_dict
+        entities = list(entity_list_map.keys())
+        lists = list(list_map.keys())
+
+        entity_dict = {entities[i] : i for i in range(len(entities))}
+        list_dict = {lists[i] : i for i in range(len(lists))}
+
+        return entity_list_map, list_map, entity_dict, list_dict
     
     def initiate_from_map(self, input_file):
         self.initiate(*self.create_map(input_file))
